@@ -65,6 +65,10 @@ public final class KanbanRepository {
     }
 
     public Task addTask(String title, String description) {
+        return addTask(title, description, TaskCategory.NONE);
+    }
+
+    public Task addTask(String title, String description, TaskCategory category) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("title is required");
         }
@@ -72,7 +76,7 @@ public final class KanbanRepository {
             List<Task> tasks = readTasks();
             Instant now = Instant.now();
             Task task = new Task(UUID.randomUUID().toString(), title.trim(),
-                    description == null ? "" : description, TaskStatus.TODO, now, now);
+                    description == null ? "" : description, TaskStatus.TODO, category, now, now);
             tasks.add(task);
             writeTasks(tasks);
             return task;
@@ -84,12 +88,19 @@ public final class KanbanRepository {
     }
 
     public boolean updateTask(String id, String newTitle, String newDescription) {
+        return updateTask(id, newTitle, newDescription, null);
+    }
+
+    public boolean updateTask(String id, String newTitle, String newDescription, TaskCategory newCategory) {
         return withLock(() -> mutate(id, task -> {
             if (newTitle != null && !newTitle.isBlank()) {
                 task.setTitle(newTitle.trim());
             }
             if (newDescription != null) {
                 task.setDescription(newDescription);
+            }
+            if (newCategory != null) {
+                task.setCategory(newCategory);
             }
         }));
     }
@@ -153,11 +164,13 @@ public final class KanbanRepository {
                 Element el = (Element) nodes.item(i);
                 String id = el.getAttribute("id");
                 TaskStatus status = TaskStatus.valueOf(el.getAttribute("status"));
+                String categoryAttr = el.getAttribute("category");
+                TaskCategory category = categoryAttr.isBlank() ? TaskCategory.NONE : TaskCategory.valueOf(categoryAttr);
                 Instant createdAt = Instant.parse(el.getAttribute("createdAt"));
                 Instant updatedAt = Instant.parse(el.getAttribute("updatedAt"));
                 String title = textOf(el, "title");
                 String description = textOf(el, "description");
-                tasks.add(new Task(id, title, description, status, createdAt, updatedAt));
+                tasks.add(new Task(id, title, description, status, category, createdAt, updatedAt));
             }
         } catch (Exception e) {
             throw new KanbanStorageException("Failed to read kanban database at " + dbFile, e);
@@ -191,6 +204,7 @@ public final class KanbanRepository {
                 Element taskEl = doc.createElement("task");
                 taskEl.setAttribute("id", task.getId());
                 taskEl.setAttribute("status", task.getStatus().name());
+                taskEl.setAttribute("category", task.getCategory().name());
                 taskEl.setAttribute("createdAt", task.getCreatedAt().toString());
                 taskEl.setAttribute("updatedAt", task.getUpdatedAt().toString());
 

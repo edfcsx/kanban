@@ -2,6 +2,7 @@ package com.kanban.cli;
 
 import com.kanban.core.KanbanRepository;
 import com.kanban.core.Task;
+import com.kanban.core.TaskCategory;
 import com.kanban.core.TaskStatus;
 
 import java.util.HashMap;
@@ -51,17 +52,24 @@ public final class KanbanCli {
     private static void add(KanbanRepository repository, Map<String, String> params) {
         String title = require(params, "title");
         String description = params.getOrDefault("desc", params.getOrDefault("description", ""));
-        Task task = repository.addTask(title, description);
-        System.out.println("OK id=" + task.getId() + " status=" + task.getStatus() + " title=\"" + task.getTitle() + "\"");
+        TaskCategory category = TaskCategory.parse(params.get("category"));
+        Task task = repository.addTask(title, description, category);
+        System.out.println("OK id=" + task.getId() + " status=" + task.getStatus()
+                + " category=" + task.getCategory() + " title=\"" + task.getTitle() + "\"");
     }
 
     private static void list(KanbanRepository repository, Map<String, String> params) {
         String statusFilter = params.get("status");
         TaskStatus filter = statusFilter != null ? TaskStatus.parse(statusFilter) : null;
+        String categoryFilter = params.get("category");
+        TaskCategory categoryF = categoryFilter != null ? TaskCategory.parse(categoryFilter) : null;
 
         List<Task> tasks = repository.loadAll();
         if (filter != null) {
             tasks = tasks.stream().filter(t -> t.getStatus() == filter).toList();
+        }
+        if (categoryF != null) {
+            tasks = tasks.stream().filter(t -> t.getCategory() == categoryF).toList();
         }
 
         if (tasks.isEmpty()) {
@@ -70,7 +78,8 @@ public final class KanbanCli {
         }
 
         for (Task task : tasks) {
-            System.out.println("[" + task.getStatus() + "] " + task.getId() + " - " + task.getTitle());
+            System.out.println("[" + task.getStatus() + "] [" + task.getCategory() + "] "
+                    + task.getId() + " - " + task.getTitle());
             if (task.getDescription() != null && !task.getDescription().isBlank()) {
                 System.out.println("    " + task.getDescription().replace("\n", "\n    "));
             }
@@ -93,7 +102,8 @@ public final class KanbanCli {
         String id = require(params, "id");
         String title = params.get("title");
         String description = params.containsKey("desc") ? params.get("desc") : params.get("description");
-        boolean updated = repository.updateTask(id, title, description);
+        TaskCategory category = params.containsKey("category") ? TaskCategory.parse(params.get("category")) : null;
+        boolean updated = repository.updateTask(id, title, description, category);
         if (!updated) {
             System.err.println("ERROR: no task found with id=" + id);
             System.exit(1);
@@ -118,10 +128,10 @@ public final class KanbanCli {
                 Kanban CLI - manage kanban tasks from the command line
 
                 Usage:
-                  java -jar kanban-api.jar action=add title="Task title" desc="Description"
-                  java -jar kanban-api.jar action=list [status=todo|in_progress|completed]
+                  java -jar kanban-api.jar action=add title="Task title" desc="Description" [category=feature|bug|security|chore|docs]
+                  java -jar kanban-api.jar action=list [status=todo|in_progress|completed] [category=feature|bug|security|chore|docs]
                   java -jar kanban-api.jar action=move id=<id> status=todo|in_progress|completed
-                  java -jar kanban-api.jar action=edit id=<id> [title="New title"] [desc="New description"]
+                  java -jar kanban-api.jar action=edit id=<id> [title="New title"] [desc="New description"] [category=feature|bug|security|chore|docs]
                   java -jar kanban-api.jar action=delete id=<id>
 
                 Database file: %s

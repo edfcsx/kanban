@@ -2,6 +2,7 @@ package com.kanban.gui;
 
 import com.kanban.core.KanbanRepository;
 import com.kanban.core.Task;
+import com.kanban.core.TaskCategory;
 import com.kanban.core.TaskStatus;
 
 import javax.swing.BorderFactory;
@@ -14,8 +15,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -25,6 +29,7 @@ import java.awt.GridLayout;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -41,6 +46,7 @@ public final class MainFrame extends JFrame {
     private final Map<TaskStatus, JPanel> columnBodies = new EnumMap<>(TaskStatus.class);
     private final Map<TaskStatus, JLabel> columnHeaders = new EnumMap<>(TaskStatus.class);
     private List<Task> tasks;
+    private String searchQuery = "";
 
     public MainFrame(KanbanRepository repository) {
         super("Kanban");
@@ -84,11 +90,44 @@ public final class MainFrame extends JFrame {
         titleBlock.add(title);
         titleBlock.add(pathLabel);
 
+        JTextField searchField = new JTextField();
+        searchField.setToolTipText("Search tasks by title or description");
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                onSearchChanged();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                onSearchChanged();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                onSearchChanged();
+            }
+
+            private void onSearchChanged() {
+                searchQuery = searchField.getText().trim();
+                renderTasks();
+            }
+        });
+
+        JPanel searchPanel = new JPanel(new BorderLayout(6, 0));
+        searchPanel.setOpaque(false);
+        searchPanel.setBorder(new EmptyBorder(0, 24, 0, 24));
+        JLabel searchLabel = new JLabel("Search");
+        searchLabel.setForeground(Theme.TEXT_SECONDARY);
+        searchPanel.add(searchLabel, BorderLayout.WEST);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+
         JButton addButton = new JButton("+ New Task");
         addButton.setForeground(Theme.TEXT_PRIMARY);
         addButton.addActionListener(e -> openAddDialog());
 
         toolbar.add(titleBlock, BorderLayout.WEST);
+        toolbar.add(searchPanel, BorderLayout.CENTER);
         toolbar.add(addButton, BorderLayout.EAST);
         return toolbar;
     }
@@ -136,11 +175,7 @@ public final class MainFrame extends JFrame {
     }
 
     private Color headerColor(TaskStatus status) {
-        return switch (status) {
-            case TODO -> Theme.COLUMN_TODO;
-            case IN_PROGRESS -> Theme.COLUMN_IN_PROGRESS;
-            case COMPLETED -> Theme.COLUMN_COMPLETED;
-        };
+        return Theme.statusColor(status);
     }
 
     private void renderTasks() {
@@ -150,11 +185,12 @@ public final class MainFrame extends JFrame {
 
             List<Task> columnTasks = tasks.stream()
                     .filter(t -> t.getStatus() == status)
+                    .filter(this::matchesSearch)
                     .sorted(Comparator.comparing(Task::getCreatedAt))
                     .toList();
 
             for (Task task : columnTasks) {
-                TaskCardPanel card = new TaskCardPanel(task,
+                TaskCardPanel card = new TaskCardPanel(task, this::openDetailDialog,
                         this::moveToPrevious, this::moveToNext, this::openEditDialog, this::confirmAndDelete);
                 card.setAlignmentX(Component.LEFT_ALIGNMENT);
                 body.add(card);
@@ -167,6 +203,15 @@ public final class MainFrame extends JFrame {
         }
     }
 
+    private boolean matchesSearch(Task task) {
+        if (searchQuery.isEmpty()) {
+            return true;
+        }
+        String query = searchQuery.toLowerCase(Locale.ROOT);
+        return task.getTitle().toLowerCase(Locale.ROOT).contains(query)
+                || task.getDescription().toLowerCase(Locale.ROOT).contains(query);
+    }
+
     private void reloadFromDisk() {
         List<Task> fresh = repository.loadAll();
         if (!fresh.equals(tasks)) {
@@ -176,21 +221,26 @@ public final class MainFrame extends JFrame {
     }
 
     private void openAddDialog() {
-        TaskDialog.Result result = TaskDialog.show(this, "New Task", "", "");
+        TaskDialog.Result result = TaskDialog.show(this, "New Task", "", "", TaskCategory.NONE);
         if (result == null) {
             return;
         }
-        repository.addTask(result.title(), result.description());
+        repository.addTask(result.title(), result.description(), result.category());
         refreshAfterOwnAction();
     }
 
     private void openEditDialog(Task task) {
-        TaskDialog.Result result = TaskDialog.show(this, "Edit Task", task.getTitle(), task.getDescription());
+        TaskDialog.Result result = TaskDialog.show(this, "Edit Task", task.getTitle(), task.getDescription(),
+                task.getCategory());
         if (result == null) {
             return;
         }
-        repository.updateTask(task.getId(), result.title(), result.description());
+        repository.updateTask(task.getId(), result.title(), result.description(), result.category());
         refreshAfterOwnAction();
+    }
+
+    private void openDetailDialog(Task task) {
+        TaskDetailDialog.show(this, task, this::openEditDialog);
     }
 
     private void moveToPrevious(Task task) {

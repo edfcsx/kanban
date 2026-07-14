@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":core"))
+    implementation("org.commonmark:commonmark:0.29.0")
 }
 
 application {

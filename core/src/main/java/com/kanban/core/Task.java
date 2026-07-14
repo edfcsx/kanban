@@ -12,15 +12,17 @@ public final class Task {
     private String title;
     private String description;
     private TaskStatus status;
+    private TaskCategory category;
     private final Instant createdAt;
     private Instant updatedAt;
 
     public Task(String id, String title, String description, TaskStatus status,
-                Instant createdAt, Instant updatedAt) {
+                TaskCategory category, Instant createdAt, Instant updatedAt) {
         this.id = Objects.requireNonNull(id, "id");
         this.title = Objects.requireNonNull(title, "title");
         this.description = description != null ? description : "";
         this.status = Objects.requireNonNull(status, "status");
+        this.category = category != null ? category : TaskCategory.NONE;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
     }
@@ -53,6 +55,14 @@ public final class Task {
         this.status = status;
     }
 
+    public TaskCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(TaskCategory category) {
+        this.category = category != null ? category : TaskCategory.NONE;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -73,12 +83,13 @@ public final class Task {
                 && title.equals(task.title)
                 && description.equals(task.description)
                 && status == task.status
+                && category == task.category
                 && createdAt.equals(task.createdAt)
                 && updatedAt.equals(task.updatedAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, description, status, createdAt, updatedAt);
+        return Objects.hash(id, title, description, status, category, createdAt, updatedAt);
     }
 }

@@ -1,6 +1,7 @@
 package com.kanban.gui;
 
 import com.kanban.core.Task;
+import com.kanban.core.TaskCategory;
 import com.kanban.core.TaskStatus;
 
 import javax.swing.Box;
@@ -14,8 +15,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
@@ -23,20 +27,29 @@ import java.util.function.Consumer;
 /**
  * A single visual card for one task, shown inside a column. Movement between
  * columns is done with the prev/next buttons rather than drag-and-drop, to
- * keep the interaction simple and discoverable.
+ * keep the interaction simple and discoverable. Clicking anywhere on the
+ * card (outside the action buttons) opens the read-only detail view.
  */
 final class TaskCardPanel extends JPanel {
 
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZoneId.systemDefault());
+    private static final int DESCRIPTION_PREVIEW_LIMIT = 200;
 
-    TaskCardPanel(Task task, Consumer<Task> onMovePrevious, Consumer<Task> onMoveNext,
+    TaskCardPanel(Task task, Consumer<Task> onView, Consumer<Task> onMovePrevious, Consumer<Task> onMoveNext,
                   Consumer<Task> onEdit, Consumer<Task> onDelete) {
         setLayout(new BorderLayout(6, 6));
         setBorder(new CompoundBorder(new EmptyBorder(4, 4, 4, 4),
                 new CompoundBorder(new LineBorder(Theme.BORDER, 1, true), new EmptyBorder(8, 10, 8, 10))));
         setBackground(Theme.SURFACE);
         setAlignmentX(Component.LEFT_ALIGNMENT);
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                onView.accept(task);
+            }
+        });
 
         add(buildTextBlock(task), BorderLayout.CENTER);
         add(buildActionBar(task, onMovePrevious, onMoveNext, onEdit, onDelete), BorderLayout.SOUTH);
@@ -47,6 +60,13 @@ final class TaskCardPanel extends JPanel {
         textPanel.setOpaque(false);
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
 
+        if (task.getCategory() != TaskCategory.NONE) {
+            JLabel categoryBadge = Badges.category(task.getCategory());
+            categoryBadge.setAlignmentX(Component.LEFT_ALIGNMENT);
+            textPanel.add(categoryBadge);
+            textPanel.add(Box.createVerticalStrut(4));
+        }
+
         JLabel titleLabel = new JLabel("<html><b>" + escape(task.getTitle()) + "</b></html>");
         titleLabel.setFont(titleLabel.getFont().deriveFont(14f));
         titleLabel.setForeground(Theme.TEXT_PRIMARY);
@@ -55,7 +75,7 @@ final class TaskCardPanel extends JPanel {
 
         String description = task.getDescription();
         if (description != null && !description.isBlank()) {
-            JTextArea descArea = new JTextArea(description);
+            JTextArea descArea = new JTextArea(truncate(description, DESCRIPTION_PREVIEW_LIMIT));
             descArea.setEditable(false);
             descArea.setLineWrap(true);
             descArea.setWrapStyleWord(true);
@@ -113,6 +133,13 @@ final class TaskCardPanel extends JPanel {
         button.setFont(button.getFont().deriveFont(11f));
         button.setForeground(Theme.TEXT_PRIMARY);
         return button;
+    }
+
+    private static String truncate(String text, int limit) {
+        if (text.length() <= limit) {
+            return text;
+        }
+        return text.substring(0, limit).stripTrailing() + "…";
     }
 
     private static String escape(String text) {
