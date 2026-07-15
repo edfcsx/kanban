@@ -40,4 +40,12 @@ public final class KanbanPaths {
     public static File lockFile() {
         return new File(dataDirectory(), "kanban.xml.lock");
     }
+
+    public static File projectsDirectory() {
+        return new File(dataDirectory(), "projects");
+    }
+
+    public static File stateFile() {
+        return new File(dataDirectory(), "state.properties");
+    }
 }

@@ -6,14 +6,18 @@ from either one interchangeably.
 
 ## Features
 
-- Three columns: **Todo**, **In Progress**, **Completed**.
+- **Projects**: tasks are grouped into projects, each with its own task list.
+  The GUI opens on a project picker (choose an existing one or create a new
+  one); the CLI defaults to whichever project was opened last, or you can
+  target one explicitly with `project=<slug>`.
+- Three columns per project: **Todo**, **In Progress**, **Completed**.
 - Drag and drop cards between columns, or use the ‹ Move / Move › buttons.
 - Categories (Feature, Bug, Security, Chore, Docs) with colored badges, plus
   a category filter and free-text search in the toolbar.
 - Markdown descriptions (code fences included), rendered live in a preview
   tab and in the task detail view.
-- The GUI polls the database every 2 seconds, so changes made through the
-  CLI while the window is open show up automatically.
+- The GUI polls the current project's database every 2 seconds, so changes
+  made through the CLI while the window is open show up automatically.
 
 ## Requirements
 
@@ -54,7 +58,14 @@ java -jar cli/build/libs/kanban-api.jar action=list status=todo category=bug
 java -jar cli/build/libs/kanban-api.jar action=move id=<id> status=in_progress
 java -jar cli/build/libs/kanban-api.jar action=edit id=<id> title="New title"
 java -jar cli/build/libs/kanban-api.jar action=delete id=<id>
+java -jar cli/build/libs/kanban-api.jar action=projects
+java -jar cli/build/libs/kanban-api.jar action=create-project name="Another Project"
 ```
+
+Every action above also accepts `project=<slug>` to target a specific
+project; when omitted, it falls back to the current project (whichever was
+last opened in the GUI or selected via the CLI), auto-creating a "Default"
+project on first-ever use so a fresh install never blocks on it.
 
 All output goes to stdout on success and stderr on failure, with a
 non-zero exit code on error, so it's safe to script against.

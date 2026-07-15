@@ -17,6 +17,45 @@
     -fx-background-color: -fx-base-bg;
 }
 
+/* ---------- Project picker ---------- */
+
+.picker-root {
+    -fx-background-color: -fx-base-bg;
+}
+
+.picker-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-primary;
+}
+
+.picker-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: -fx-text-secondary;
+}
+
+.picker-panel {
+    -fx-background-color: -fx-surface;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: -fx-border-color-soft;
+    -fx-effect: dropshadow(gaussian, rgba(31,35,40,0.06), 10, 0, 0, 2);
+}
+
+.project-chip {
+    -fx-background-color: -fx-base-bg;
+    -fx-background-radius: 8;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-primary;
+}
+
+.project-chip:hover {
+    -fx-background-color: derive(-fx-base-bg, -6%);
+}
+
 /* ---------- Toolbar ---------- */
 
 .toolbar {

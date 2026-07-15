@@ -1,6 +1,7 @@
 package com.kanban.gui;
 
 import com.kanban.core.KanbanRepository;
+import com.kanban.core.Project;
 import com.kanban.core.Task;
 import com.kanban.core.TaskCategory;
 import com.kanban.core.TaskStatus;
@@ -44,6 +45,9 @@ final class MainView extends BorderPane {
     private static final Duration REFRESH_INTERVAL = Duration.seconds(2);
 
     private final KanbanRepository repository;
+    private final Project project;
+    private final Runnable onSwitchProject;
+    private final Timeline refreshTimeline;
     private final Map<TaskStatus, VBox> columnBodies = new EnumMap<>(TaskStatus.class);
     private final Map<TaskStatus, Label> columnHeaders = new EnumMap<>(TaskStatus.class);
     private final Map<TaskStatus, VBox> columns = new EnumMap<>(TaskStatus.class);
@@ -51,8 +55,10 @@ final class MainView extends BorderPane {
     private String searchQuery = "";
     private TaskCategory categoryFilter;
 
-    MainView(KanbanRepository repository) {
+    MainView(KanbanRepository repository, Project project, Runnable onSwitchProject) {
         this.repository = repository;
+        this.project = project;
+        this.onSwitchProject = onSwitchProject;
 
         setTop(buildToolbar());
         setCenter(buildBoard());
@@ -60,7 +66,7 @@ final class MainView extends BorderPane {
         this.tasks = repository.loadAll();
         renderTasks();
 
-        Timeline refreshTimeline = new Timeline(new KeyFrame(REFRESH_INTERVAL, e -> reloadFromDisk()));
+        refreshTimeline = new Timeline(new KeyFrame(REFRESH_INTERVAL, e -> reloadFromDisk()));
         refreshTimeline.setCycleCount(Timeline.INDEFINITE);
         refreshTimeline.play();
     }
@@ -73,10 +79,14 @@ final class MainView extends BorderPane {
         Label title = new Label("Kanban Board");
         title.getStyleClass().add("app-title");
 
-        Label pathLabel = new Label(repository.getDatabaseFile().getAbsolutePath());
-        pathLabel.getStyleClass().add("app-subtitle");
+        Button projectChip = new Button("📁 " + project.displayName() + "  ▾");
+        projectChip.getStyleClass().add("project-chip");
+        projectChip.setOnAction(e -> {
+            refreshTimeline.stop();
+            onSwitchProject.run();
+        });
 
-        VBox titleBlock = new VBox(2, title, pathLabel);
+        VBox titleBlock = new VBox(4, title, projectChip);
 
         Label searchLabel = new Label("Search");
         searchLabel.getStyleClass().add("search-label");
