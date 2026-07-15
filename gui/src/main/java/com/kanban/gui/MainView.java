@@ -7,20 +7,24 @@ import com.kanban.core.TaskStatus;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -42,8 +46,10 @@ final class MainView extends BorderPane {
     private final KanbanRepository repository;
     private final Map<TaskStatus, VBox> columnBodies = new EnumMap<>(TaskStatus.class);
     private final Map<TaskStatus, Label> columnHeaders = new EnumMap<>(TaskStatus.class);
+    private final Map<TaskStatus, VBox> columns = new EnumMap<>(TaskStatus.class);
     private List<Task> tasks;
     private String searchQuery = "";
+    private TaskCategory categoryFilter;
 
     MainView(KanbanRepository repository) {
         this.repository = repository;
@@ -89,11 +95,38 @@ final class MainView extends BorderPane {
         searchBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(searchBox, Priority.ALWAYS);
 
+        Label categoryLabel = new Label("Category");
+        categoryLabel.getStyleClass().add("search-label");
+
+        ComboBox<TaskCategory> categoryCombo = new ComboBox<>(
+                FXCollections.observableArrayList(TaskCategory.values()));
+        categoryCombo.getStyleClass().add("form-combo");
+        categoryCombo.getItems().add(0, null);
+        categoryCombo.setValue(null);
+        categoryCombo.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(TaskCategory category) {
+                return category == null ? "All Categories" : category.label();
+            }
+
+            @Override
+            public TaskCategory fromString(String string) {
+                return null;
+            }
+        });
+        categoryCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
+            categoryFilter = newVal;
+            renderTasks();
+        });
+
+        HBox categoryBox = new HBox(6, categoryLabel, categoryCombo);
+        categoryBox.setAlignment(Pos.CENTER_LEFT);
+
         Button addButton = new Button("+ New Task");
         addButton.getStyleClass().add("btn-primary");
         addButton.setOnAction(e -> openAddDialog());
 
-        toolbar.getChildren().addAll(titleBlock, searchBox, addButton);
+        toolbar.getChildren().addAll(titleBlock, searchBox, categoryBox, addButton);
         return toolbar;
     }
 
@@ -126,6 +159,30 @@ final class MainView extends BorderPane {
 
         VBox column = new VBox(header, scrollPane);
         column.getStyleClass().add("column");
+        columns.put(status, column);
+
+        scrollPane.setOnDragOver(e -> {
+            if (e.getDragboard().hasContent(TaskCard.TASK_ID_FORMAT)) {
+                e.acceptTransferModes(TransferMode.MOVE);
+            }
+            e.consume();
+        });
+        scrollPane.setOnDragEntered(e -> {
+            if (e.getDragboard().hasContent(TaskCard.TASK_ID_FORMAT)) {
+                column.getStyleClass().add("column-drag-over");
+            }
+        });
+        scrollPane.setOnDragExited(e -> column.getStyleClass().remove("column-drag-over"));
+        scrollPane.setOnDragDropped(e -> {
+            var dragboard = e.getDragboard();
+            boolean success = dragboard.hasContent(TaskCard.TASK_ID_FORMAT);
+            if (success) {
+                moveTaskToStatus((String) dragboard.getContent(TaskCard.TASK_ID_FORMAT), status);
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
+
         return column;
     }
 
@@ -137,6 +194,7 @@ final class MainView extends BorderPane {
             List<Task> columnTasks = tasks.stream()
                     .filter(t -> t.getStatus() == status)
                     .filter(this::matchesSearch)
+                    .filter(this::matchesCategory)
                     .sorted(Comparator.comparing(Task::getCreatedAt))
                     .toList();
 
@@ -157,6 +215,10 @@ final class MainView extends BorderPane {
         String query = searchQuery.toLowerCase(Locale.ROOT);
         return task.getTitle().toLowerCase(Locale.ROOT).contains(query)
                 || task.getDescription().toLowerCase(Locale.ROOT).contains(query);
+    }
+
+    private boolean matchesCategory(Task task) {
+        return categoryFilter == null || task.getCategory() == categoryFilter;
     }
 
     private void reloadFromDisk() {
@@ -201,6 +263,17 @@ final class MainView extends BorderPane {
 
     private void moveToNext(Task task) {
         repository.updateStatus(task.getId(), task.getStatus().next());
+        refreshAfterOwnAction();
+    }
+
+    private void moveTaskToStatus(String taskId, TaskStatus newStatus) {
+        boolean alreadyThere = tasks.stream()
+                .filter(t -> t.getId().equals(taskId))
+                .anyMatch(t -> t.getStatus() == newStatus);
+        if (alreadyThere) {
+            return;
+        }
+        repository.updateStatus(taskId, newStatus);
         refreshAfterOwnAction();
     }
 

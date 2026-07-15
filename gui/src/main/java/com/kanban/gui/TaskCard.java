@@ -8,6 +8,10 @@ import javafx.event.Event;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -17,21 +21,45 @@ import java.util.function.Consumer;
 
 /**
  * A single visual card for one task, shown inside a column. Movement between
- * columns is done with the prev/next buttons rather than drag-and-drop, to
- * keep the interaction simple and discoverable. Clicking anywhere on the
- * card (outside the action buttons) opens the read-only detail view.
+ * columns can be done either with the prev/next buttons (keyboard/precision
+ * friendly) or by dragging the card onto another column. Clicking anywhere
+ * on the card (outside the action buttons) opens the read-only detail view.
  */
 final class TaskCard extends VBox {
+
+    static final DataFormat TASK_ID_FORMAT = new DataFormat("com.kanban.gui.taskId");
 
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZoneId.systemDefault());
     private static final int DESCRIPTION_PREVIEW_LIMIT = 200;
 
+    private boolean dragging;
+
     TaskCard(Task task, Consumer<Task> onView, Consumer<Task> onMovePrevious, Consumer<Task> onMoveNext,
              Consumer<Task> onEdit, Consumer<Task> onDelete) {
         getStyleClass().add("task-card");
         setSpacing(4);
-        setOnMouseClicked(e -> onView.accept(task));
+        setOnMouseClicked(e -> {
+            if (!dragging) {
+                onView.accept(task);
+            }
+        });
+
+        setOnDragDetected(e -> {
+            dragging = true;
+            Dragboard dragboard = startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.put(TASK_ID_FORMAT, task.getId());
+            dragboard.setContent(content);
+            dragboard.setDragView(snapshot(null, null), e.getX(), e.getY());
+            setOpacity(0.5);
+            e.consume();
+        });
+        setOnDragDone(e -> {
+            setOpacity(1.0);
+            dragging = false;
+            e.consume();
+        });
 
         if (task.getCategory() != TaskCategory.NONE) {
             getChildren().add(Badges.category(task.getCategory()));
@@ -61,9 +89,11 @@ final class TaskCard extends VBox {
                                  Consumer<Task> onEdit, Consumer<Task> onDelete) {
         HBox bar = new HBox(4);
         bar.getStyleClass().add("card-actions");
-        // Swallow clicks here so they don't bubble up and also open the
-        // detail view behind whatever action button was pressed.
+        // Swallow clicks/drags here so they don't bubble up and also open
+        // the detail view (or start a card drag) behind whatever button
+        // was pressed.
         bar.setOnMouseClicked(Event::consume);
+        bar.setOnDragDetected(Event::consume);
 
         Button previous = smallButton("‹ Move");
         previous.setDisable(task.getStatus() == TaskStatus.TODO);
