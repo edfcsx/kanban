@@ -7,7 +7,9 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.Window;
@@ -40,6 +42,7 @@ final class TaskDetailView {
         ButtonType editButtonType = new ButtonType("Edit", ButtonBar.ButtonData.OTHER);
         ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(editButtonType, closeButtonType);
+        dialog.setResizable(true);
 
         Label titleLabel = new Label(task.getTitle());
         titleLabel.getStyleClass().add("detail-title");
@@ -51,13 +54,19 @@ final class TaskDetailView {
                 + "   ·   Updated " + DATE_FORMAT.format(task.getUpdatedAt()));
         metaLabel.getStyleClass().add("detail-meta");
 
+        Separator separator = new Separator();
+        separator.getStyleClass().add("detail-separator");
+
         WebView descriptionView = new WebView();
         descriptionView.getStyleClass().add("detail-web-frame");
-        descriptionView.setPrefSize(480, 320);
+        descriptionView.setPrefSize(520, 340);
+        descriptionView.setMinSize(360, 200);
+        VBox.setVgrow(descriptionView, Priority.ALWAYS);
         descriptionView.getEngine().loadContent(MarkdownRenderer.toHtml(task.getDescription()));
 
-        VBox content = new VBox(8, titleLabel, badgeRow, metaLabel, descriptionView);
-        content.setPadding(new Insets(4, 0, 0, 0));
+        VBox content = new VBox(10, titleLabel, badgeRow, metaLabel, separator, descriptionView);
+        content.getStyleClass().add("detail-content");
+        content.setPadding(new Insets(20, 24, 16, 24));
 
         dialog.getDialogPane().setContent(content);
 

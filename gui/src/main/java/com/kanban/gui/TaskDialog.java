@@ -15,6 +15,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.Window;
@@ -38,6 +39,7 @@ final class TaskDialog {
         dialog.getDialogPane().getStylesheets().add(Styles.SHEET);
         dialog.getDialogPane().getStyleClass().add("task-dialog-pane");
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.setResizable(true);
 
         TextField titleField = new TextField(initialTitle == null ? "" : initialTitle);
         titleField.getStyleClass().add("form-text-field");
@@ -91,8 +93,9 @@ final class TaskDialog {
         Label descLabel = new Label("Description (Markdown supported, e.g. ```code``` for snippets)");
         descLabel.getStyleClass().add("form-hint");
 
+        VBox.setVgrow(descriptionTabs, Priority.ALWAYS);
         VBox form = new VBox(8, titleLabel, titleField, categoryRow, descLabel, descriptionTabs);
-        form.setPadding(new Insets(4, 0, 0, 0));
+        form.setPadding(new Insets(20, 24, 8, 24));
 
         dialog.getDialogPane().setContent(form);
 

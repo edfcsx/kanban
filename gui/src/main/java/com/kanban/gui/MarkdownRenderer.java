@@ -21,7 +21,7 @@ final class MarkdownRenderer {
                 font-size: 13px;
                 color: #1F2328;
                 margin: 0;
-                padding: 2px 4px;
+                padding: 10px 14px;
                 line-height: 1.5;
             }
             code {

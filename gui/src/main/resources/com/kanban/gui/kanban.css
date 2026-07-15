@@ -305,7 +305,15 @@
     -fx-background-radius: 8;
 }
 
+.detail-separator .line {
+    -fx-border-color: -fx-border-color-soft transparent transparent transparent;
+}
+
 /* Buttons produced by DialogPane's ButtonType (OK/Cancel/Edit/Close) */
+.dialog-pane > .button-bar > .container {
+    -fx-padding: 12 24 18 24;
+}
+
 .dialog-pane .button {
     -fx-background-radius: 8;
     -fx-padding: 7 16 7 16;
