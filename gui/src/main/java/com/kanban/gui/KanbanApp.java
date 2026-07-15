@@ -2,25 +2,23 @@ package com.kanban.gui;
 
 import com.kanban.core.KanbanRepository;
 
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.plaf.metal.MetalLookAndFeel;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
-public final class KanbanApp {
+public final class KanbanApp extends Application {
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                // Deliberately NOT the system L&F: on a dark OS theme its
-                // default text color turns light, which is unreadable
-                // against this app's fixed light card backgrounds. Metal
-                // renders identically (light) on every OS/theme.
-                UIManager.setLookAndFeel(new MetalLookAndFeel());
-            } catch (Exception ignored) {
-                // Keep the JVM's default look and feel.
-            }
-            MainFrame frame = new MainFrame(new KanbanRepository());
-            frame.setVisible(true);
-        });
+    @Override
+    public void start(Stage stage) {
+        MainView root = new MainView(new KanbanRepository());
+
+        Scene scene = new Scene(root, 1080, 680);
+        scene.getStylesheets().add(Styles.SHEET);
+
+        stage.setTitle("Kanban");
+        stage.setScene(scene);
+        stage.setMinWidth(720);
+        stage.setMinHeight(480);
+        stage.show();
     }
 }

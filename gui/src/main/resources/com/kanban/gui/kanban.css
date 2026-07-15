@@ -1,0 +1,322 @@
+/*
+ * Modern flat theme for the Kanban board. Colors are applied explicitly
+ * (never relying on a system look-and-feel) so the app looks the same
+ * regardless of the OS light/dark theme, matching the old Swing app's intent.
+ */
+
+.root {
+    -fx-font-family: "Segoe UI", "Noto Sans", "Inter", "Helvetica Neue", sans-serif;
+    -fx-font-size: 13px;
+    -fx-base-bg: #F4F5F7;
+    -fx-surface: #FFFFFF;
+    -fx-border-color-soft: #E3E5E9;
+    -fx-text-primary: #1F2328;
+    -fx-text-secondary: #57606A;
+    -fx-text-muted: #8A94A6;
+    -fx-accent: #2F6FED;
+    -fx-background-color: -fx-base-bg;
+}
+
+/* ---------- Toolbar ---------- */
+
+.toolbar {
+    -fx-background-color: -fx-surface;
+    -fx-padding: 14 20 14 20;
+    -fx-border-color: transparent transparent -fx-border-color-soft transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.app-title {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-primary;
+}
+
+.app-subtitle {
+    -fx-font-size: 10px;
+    -fx-text-fill: -fx-text-muted;
+}
+
+.search-label {
+    -fx-text-fill: -fx-text-secondary;
+    -fx-font-size: 12px;
+}
+
+.search-field {
+    -fx-background-color: -fx-base-bg;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: -fx-border-color-soft;
+    -fx-padding: 7 12 7 12;
+    -fx-prompt-text-fill: -fx-text-muted;
+}
+
+.search-field:focused {
+    -fx-border-color: -fx-accent;
+    -fx-background-color: -fx-surface;
+}
+
+.btn-primary {
+    -fx-background-color: -fx-accent;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 9 18 9 18;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(47,111,237,0.35), 8, 0, 0, 2);
+}
+
+.btn-primary:hover {
+    -fx-background-color: derive(-fx-accent, -10%);
+}
+
+.btn-primary:armed {
+    -fx-background-color: derive(-fx-accent, -20%);
+}
+
+/* ---------- Board & columns ---------- */
+
+.board {
+    -fx-background-color: -fx-base-bg;
+    -fx-padding: 16;
+}
+
+.column {
+    -fx-background-color: -fx-surface;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: -fx-border-color-soft;
+    -fx-effect: dropshadow(gaussian, rgba(31,35,40,0.06), 10, 0, 0, 2);
+}
+
+.column-header {
+    -fx-padding: 12 16 12 16;
+    -fx-background-radius: 12 12 0 0;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: -fx-text-primary;
+}
+
+.column-header-todo {
+    -fx-background-color: #E8EAED;
+}
+
+.column-header-in-progress {
+    -fx-background-color: #D7E8FB;
+}
+
+.column-header-completed {
+    -fx-background-color: #DBF3DE;
+}
+
+.column-body {
+    -fx-background-color: -fx-surface;
+    -fx-background-radius: 0 0 12 12;
+}
+
+.column-scroll {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.column-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.column-empty-hint {
+    -fx-text-fill: -fx-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 20 0 0 0;
+}
+
+/* ---------- Task card ---------- */
+
+.task-card {
+    -fx-background-color: -fx-surface;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: -fx-border-color-soft;
+    -fx-border-width: 1;
+    -fx-padding: 12 14 10 14;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(31,35,40,0.05), 4, 0, 0, 1);
+}
+
+.task-card:hover {
+    -fx-border-color: -fx-accent;
+    -fx-effect: dropshadow(gaussian, rgba(47,111,237,0.18), 10, 0, 0, 3);
+}
+
+.task-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-primary;
+    -fx-wrap-text: true;
+}
+
+.task-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: -fx-text-secondary;
+    -fx-wrap-text: true;
+}
+
+.task-date {
+    -fx-font-size: 10px;
+    -fx-text-fill: -fx-text-muted;
+}
+
+.card-actions {
+    -fx-padding: 8 0 0 0;
+}
+
+.btn-small {
+    -fx-background-color: -fx-base-bg;
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 11px;
+    -fx-background-radius: 6;
+    -fx-padding: 4 9 4 9;
+    -fx-cursor: hand;
+}
+
+.btn-small:hover {
+    -fx-background-color: derive(-fx-base-bg, -6%);
+}
+
+.btn-small:disabled {
+    -fx-opacity: 0.4;
+}
+
+.btn-small-danger:hover {
+    -fx-background-color: #FBE2E2;
+    -fx-text-fill: #B42318;
+}
+
+/* ---------- Badges ---------- */
+
+.badge {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-padding: 3 9 3 9;
+}
+
+.badge-status-todo {
+    -fx-background-color: #E8EAED;
+    -fx-text-fill: #1F2328;
+}
+
+.badge-status-in-progress {
+    -fx-background-color: #D7E8FB;
+    -fx-text-fill: #1F2328;
+}
+
+.badge-status-completed {
+    -fx-background-color: #DBF3DE;
+    -fx-text-fill: #1F2328;
+}
+
+.badge-category-none {
+    -fx-background-color: #EFF0F2;
+    -fx-text-fill: #8A94A6;
+}
+
+.badge-category-feature {
+    -fx-background-color: #DDEAFB;
+    -fx-text-fill: #1B4C9C;
+}
+
+.badge-category-bug {
+    -fx-background-color: #FBE2D5;
+    -fx-text-fill: #B65C00;
+}
+
+.badge-category-security {
+    -fx-background-color: #FBDCDC;
+    -fx-text-fill: #B42318;
+}
+
+.badge-category-chore {
+    -fx-background-color: #E7E8EA;
+    -fx-text-fill: #5C5F66;
+}
+
+.badge-category-docs {
+    -fx-background-color: #E8DEFB;
+    -fx-text-fill: #6A3FB5;
+}
+
+/* ---------- Dialogs ---------- */
+
+.task-dialog-pane,
+.task-detail-pane {
+    -fx-background-color: -fx-surface;
+}
+
+.task-dialog-pane .header-panel,
+.task-detail-pane .header-panel {
+    -fx-background-color: -fx-surface;
+}
+
+.form-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-secondary;
+}
+
+.form-hint {
+    -fx-font-size: 11px;
+    -fx-text-fill: -fx-text-muted;
+}
+
+.form-text-field,
+.form-combo,
+.form-text-area {
+    -fx-background-color: -fx-base-bg;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: -fx-border-color-soft;
+}
+
+.form-text-field:focused,
+.form-combo:focused,
+.form-text-area:focused {
+    -fx-border-color: -fx-accent;
+}
+
+.description-tabs .tab-header-area {
+    -fx-padding: 4 0 0 0;
+}
+
+.detail-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-primary;
+}
+
+.detail-meta {
+    -fx-font-size: 10px;
+    -fx-text-fill: -fx-text-muted;
+}
+
+.detail-web-frame {
+    -fx-border-color: -fx-border-color-soft;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+/* Buttons produced by DialogPane's ButtonType (OK/Cancel/Edit/Close) */
+.dialog-pane .button {
+    -fx-background-radius: 8;
+    -fx-padding: 7 16 7 16;
+    -fx-cursor: hand;
+}
+
+.dialog-pane .button:default {
+    -fx-background-color: -fx-accent;
+    -fx-text-fill: white;
+}
+
+.dialog-pane .button:default:hover {
+    -fx-background-color: derive(-fx-accent, -10%);
+}
