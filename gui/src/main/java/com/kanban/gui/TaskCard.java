@@ -14,6 +14,7 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -31,7 +32,10 @@ final class TaskCard extends VBox {
 
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZoneId.systemDefault());
-    private static final int DESCRIPTION_PREVIEW_LIMIT = 200;
+    private static final int DESCRIPTION_PREVIEW_LIMIT = 160;
+    // Caps the preview at ~3 wrapped lines so every card has the same fixed
+    // height regardless of how long or how multi-line the description is.
+    private static final double DESCRIPTION_PREVIEW_MAX_HEIGHT = 48;
 
     private boolean dragging;
 
@@ -72,9 +76,16 @@ final class TaskCard extends VBox {
 
         String description = task.getDescription();
         if (description != null && !description.isBlank()) {
-            Label descLabel = new Label(truncate(description, DESCRIPTION_PREVIEW_LIMIT));
+            String preview = truncate(collapseWhitespace(description), DESCRIPTION_PREVIEW_LIMIT);
+            Label descLabel = new Label(preview);
             descLabel.getStyleClass().add("task-description");
             descLabel.setWrapText(true);
+            descLabel.setMinHeight(DESCRIPTION_PREVIEW_MAX_HEIGHT);
+            descLabel.setMaxHeight(DESCRIPTION_PREVIEW_MAX_HEIGHT);
+            Rectangle clip = new Rectangle();
+            clip.widthProperty().bind(descLabel.widthProperty());
+            clip.setHeight(DESCRIPTION_PREVIEW_MAX_HEIGHT);
+            descLabel.setClip(clip);
             getChildren().add(descLabel);
         }
 
@@ -120,6 +131,10 @@ final class TaskCard extends VBox {
         Button button = new Button(text);
         button.getStyleClass().add("btn-small");
         return button;
+    }
+
+    private static String collapseWhitespace(String text) {
+        return text.strip().replaceAll("\\s+", " ");
     }
 
     private static String truncate(String text, int limit) {

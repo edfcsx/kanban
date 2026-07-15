@@ -169,6 +169,13 @@ final class MainView extends BorderPane {
 
         VBox column = new VBox(header, scrollPane);
         column.getStyleClass().add("column");
+        // Force the three columns to always split the board width evenly,
+        // regardless of how wide their content wants to be: an empty column
+        // has a smaller preferred width than one with cards, so without
+        // this HBox would give it less than its fair third.
+        column.setPrefWidth(0);
+        column.setMinWidth(0);
+        column.setMaxWidth(Double.MAX_VALUE);
         columns.put(status, column);
 
         scrollPane.setOnDragOver(e -> {
