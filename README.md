@@ -83,21 +83,32 @@ application menu.
 
 ## Where tasks are stored
 
-Tasks live in a single XML file, resolved per-OS (`KanbanPaths`):
+Each project gets its own directory under a per-OS data root
+(`KanbanPaths`/`ProjectRegistry`):
 
-- Linux: `$XDG_DATA_HOME/kanban/kanban.xml` (defaults to `~/.local/share/kanban/kanban.xml`)
-- macOS: `~/Library/Application Support/Kanban/kanban.xml`
-- Windows: `%APPDATA%\Kanban\kanban.xml`
+- Linux: `$XDG_DATA_HOME/kanban/projects/<slug>/` (defaults to `~/.local/share/kanban/projects/<slug>/`)
+- macOS: `~/Library/Application Support/Kanban/projects/<slug>/`
+- Windows: `%APPDATA%\Kanban\projects\<slug>\`
 
-Every read/write is guarded by an OS-level file lock, so the GUI and any
-number of concurrent CLI calls can't corrupt each other's writes.
+Inside each project directory: `project.properties` (display name),
+`kanban.xml` (tasks) and `kanban.xml.lock`. Which project is "current" is
+tracked in a small `state.properties` file at the data root. Every
+read/write is guarded by an OS-level file lock, so the GUI and any number
+of concurrent CLI calls can't corrupt each other's writes.
+
+If you used an earlier version of this app (single global `kanban.xml`,
+no projects), it's migrated automatically and losslessly into a "Default"
+project the first time you run the new version — nothing to do manually.
 
 ## Project structure
 
-- `core/` — domain model (`Task`, `TaskStatus`, `TaskCategory`) and the
-  `KanbanRepository` that reads/writes the XML database. No UI dependency.
-- `gui/` — JavaFX board (`MainView`, `TaskCard`, `TaskDialog`,
-  `TaskDetailView`) plus the `kanban.css` stylesheet.
+- `core/` — domain model (`Task`, `TaskStatus`, `TaskCategory`), the
+  `KanbanRepository` that reads/writes a project's XML database, and
+  `ProjectRegistry` (list/create projects, track the current one, migrate
+  legacy single-file databases). No UI dependency.
+- `gui/` — JavaFX app: `ProjectPickerView` (startup screen) and the board
+  (`MainView`, `TaskCard`, `TaskDialog`, `TaskDetailView`) plus the
+  `kanban.css` stylesheet.
 - `cli/` — `KanbanCli`, a thin argument-parsing layer over `core`.
 
 ## Packaging
