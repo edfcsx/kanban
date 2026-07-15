@@ -7,4 +7,4 @@ pluginManagement {
 
 rootProject.name = "kanban"
 
-include("core", "gui", "cli")
+include("core", "gui", "cli", "mcp")

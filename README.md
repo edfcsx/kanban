@@ -1,8 +1,8 @@
 # Kanban
 
-A simple, local-first kanban board. A JavaFX desktop app and a scriptable CLI
-share the same task database, so you (or an AI assistant) can manage tasks
-from either one interchangeably.
+A simple, local-first kanban board. A JavaFX desktop app, a scriptable CLI,
+and an MCP server all share the same task database, so you (or an AI agent)
+can manage tasks from any of the three interchangeably.
 
 ## Features
 
@@ -18,6 +18,10 @@ from either one interchangeably.
   tab and in the task detail view.
 - The GUI polls the current project's database every 2 seconds, so changes
   made through the CLI while the window is open show up automatically.
+- **MCP server**: an [MCP](https://modelcontextprotocol.io) server exposes
+  project/task management as native tools an AI agent can call directly
+  (create/list/move/edit/delete tasks, list/create projects) — see
+  [MCP Server](#mcp-server) below.
 
 ## Requirements
 
@@ -31,8 +35,8 @@ from either one interchangeably.
 ./gradlew build
 ```
 
-This builds all three modules: `core` (domain model + XML storage),
-`gui` (JavaFX board) and `cli` (command-line front-end).
+This builds all four modules: `core` (domain model + XML storage),
+`gui` (JavaFX board), `cli` (command-line front-end), and `mcp` (MCP server).
 
 ## Running
 
@@ -70,6 +74,39 @@ project on first-ever use so a fresh install never blocks on it.
 All output goes to stdout on success and stderr on failure, with a
 non-zero exit code on error, so it's safe to script against.
 
+## MCP Server
+
+For agents that speak [MCP](https://modelcontextprotocol.io) natively (Claude
+Code, Claude Desktop, etc.), `kanban-mcp.jar` exposes the same operations as
+the CLI as structured tools instead of `key=value` strings, over stdio:
+
+- `list_projects`, `create_project`
+- `list_tasks`, `add_task`, `move_task`, `edit_task`, `delete_task`
+
+Every task tool accepts an optional `project` argument, falling back to the
+current project exactly like the CLI does.
+
+Build it with `./gradlew :mcp:jar` (or `./install.sh`, which installs it
+alongside the other jars). Register it with Claude Code:
+
+```bash
+claude mcp add kanban -- java -jar /path/to/kanban-mcp.jar
+```
+
+Or add it directly to a `claude_desktop_config.json` (or equivalent MCP
+client config):
+
+```json
+{
+  "mcpServers": {
+    "kanban": {
+      "command": "java",
+      "args": ["-jar", "/path/to/kanban-mcp.jar"]
+    }
+  }
+}
+```
+
 ## Installing (Linux)
 
 ```bash
@@ -77,9 +114,10 @@ non-zero exit code on error, so it's safe to script against.
 ./install.sh --uninstall  # removes everything the installer created
 ```
 
-This builds the CLI and GUI jars, installs a `kanban-cli` launcher on your
-`PATH`, and adds a desktop entry + icon so the GUI shows up in your
-application menu.
+This builds the CLI, GUI and MCP server jars, installs a `kanban-cli`
+launcher on your `PATH`, and adds a desktop entry + icon so the GUI shows up
+in your application menu. The MCP server jar is installed but not
+auto-registered with any MCP client — see [MCP Server](#mcp-server) above.
 
 ## Where tasks are stored
 
@@ -110,6 +148,8 @@ project the first time you run the new version — nothing to do manually.
   (`MainView`, `TaskCard`, `TaskDialog`, `TaskDetailView`) plus the
   `kanban.css` stylesheet.
 - `cli/` — `KanbanCli`, a thin argument-parsing layer over `core`.
+- `mcp/` — `KanbanMcpServer` (stdio transport wiring) and `KanbanTools`
+  (the 7 tool handlers), another thin layer over `core`.
 
 ## Packaging
 

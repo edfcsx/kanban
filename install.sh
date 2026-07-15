@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Installer for Kanban (CLI + GUI) on Linux.
+# Installer for Kanban (CLI + GUI + MCP server) on Linux.
 #
 #   ./install.sh            builds the project and installs it
 #   ./install.sh --uninstall   removes everything the installer created
@@ -45,17 +45,19 @@ uninstall() {
 
 command -v java &>/dev/null || { warn "Java is not installed or not on PATH. Install a JDK 21+ and re-run."; exit 1; }
 
-log "Building CLI and GUI jars with Gradle"
-"$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" :cli:jar :gui:jar
+log "Building CLI, GUI and MCP server jars with Gradle"
+"$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" :cli:jar :gui:jar :mcp:jar
 
 CLI_JAR="$SCRIPT_DIR/cli/build/libs/kanban-api.jar"
 GUI_JAR="$SCRIPT_DIR/gui/build/libs/kanban-gui.jar"
+MCP_JAR="$SCRIPT_DIR/mcp/build/libs/kanban-mcp.jar"
 [[ -f "$CLI_JAR" ]] || { warn "Build did not produce $CLI_JAR"; exit 1; }
 [[ -f "$GUI_JAR" ]] || { warn "Build did not produce $GUI_JAR"; exit 1; }
+[[ -f "$MCP_JAR" ]] || { warn "Build did not produce $MCP_JAR"; exit 1; }
 
 log "Installing jars to $APP_DIR"
 mkdir -p "$APP_DIR"
-cp -f "$CLI_JAR" "$GUI_JAR" "$APP_DIR/"
+cp -f "$CLI_JAR" "$GUI_JAR" "$MCP_JAR" "$APP_DIR/"
 
 log "Installing kanban-cli launcher to $BIN_DIR"
 mkdir -p "$BIN_DIR"
@@ -104,3 +106,4 @@ if [[ "${EUID}" -ne 0 ]] && [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
 fi
 
 log "Done. Launch the GUI from your application menu, or run: kanban-cli action=help"
+log "MCP server jar installed at $APP_DIR/kanban-mcp.jar - see README.md to register it with an MCP client"
