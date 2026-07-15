@@ -81,7 +81,7 @@ Code, Claude Desktop, etc.), `kanban-mcp.jar` exposes the same operations as
 the CLI as structured tools instead of `key=value` strings, over stdio:
 
 - `list_projects`, `create_project`
-- `list_tasks`, `add_task`, `move_task`, `edit_task`, `delete_task`
+- `list_tasks`, `get_task`, `add_task`, `move_task`, `edit_task`, `delete_task`
 
 Every task tool accepts an optional `project` argument, falling back to the
 current project exactly like the CLI does.

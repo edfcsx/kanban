@@ -15,10 +15,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Tool handlers exposed over MCP, one per CLI action (list_projects,
- * create_project, list_tasks, add_task, move_task, edit_task, delete_task).
- * Every handler resolves its target project the same way the CLI does: an
- * explicit {@code project} argument, falling back to the current project,
+ * Tool handlers exposed over MCP: list_projects, create_project, list_tasks,
+ * get_task, add_task, move_task, edit_task, delete_task. Every handler
+ * resolves its target project the same way the CLI does: an explicit
+ * {@code project} argument, falling back to the current project,
  * auto-creating "Default" on first-ever use.
  */
 final class KanbanTools {
@@ -34,6 +34,7 @@ final class KanbanTools {
                 listProjectsTool(),
                 createProjectTool(),
                 listTasksTool(),
+                getTaskTool(),
                 addTaskTool(),
                 moveTaskTool(),
                 editTaskTool(),
@@ -114,6 +115,36 @@ final class KanbanTools {
                                 .append("] ").append(task.getId()).append(" - ").append(task.getTitle()).append('\n');
                     }
                     return out.toString().stripTrailing();
+                }))
+                .build();
+    }
+
+    private McpServerFeatures.SyncToolSpecification getTaskTool() {
+        McpSchema.Tool tool = McpSchema.Tool.builder("get_task", objectSchema(
+                        Map.of(
+                                "id", stringProperty("Task id, as returned by add_task or list_tasks."),
+                                "project", stringProperty("Project slug. Defaults to the current project.")),
+                        List.of("id")))
+                .description("Get the full details of a single task, including its complete description "
+                        + "(list_tasks only shows a one-line summary per task). Omit 'project' to use the "
+                        + "current project.")
+                .build();
+        return McpServerFeatures.SyncToolSpecification.builder()
+                .tool(tool)
+                .callHandler((exchange, request) -> handle(() -> {
+                    KanbanRepository repository = repositoryFor(request);
+                    String id = stringArg(request, "id");
+                    Task task = repository.findById(id);
+                    if (task == null) {
+                        throw new IllegalArgumentException("no task found with id=" + id);
+                    }
+                    return "id: " + task.getId() + "\n"
+                            + "title: " + task.getTitle() + "\n"
+                            + "status: " + task.getStatus() + "\n"
+                            + "category: " + task.getCategory() + "\n"
+                            + "created: " + task.getCreatedAt() + "\n"
+                            + "updated: " + task.getUpdatedAt() + "\n"
+                            + "description:\n" + task.getDescription();
                 }))
                 .build();
     }
